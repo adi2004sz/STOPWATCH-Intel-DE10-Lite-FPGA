@@ -18,14 +18,14 @@ module stopwatch_top (
 );
 
     // Internal signals
-    wire clk_100Hz;                // 100 Hz timebase clock
+    wire clk_1000Hz;               // 1000 Hz timebase clock
     wire clk_display;              // Display refresh clock (~1 kHz)
     wire key0_debounced;           // Debounced start/pause button
     wire key1_debounced;           // Debounced reset button
     wire counting;                 // FSM output: counting active
     wire reset_timer;              // FSM output: reset timer
-    wire [3:0] cs_ones;            // Ones digit of centiseconds
-    wire [3:0] cs_tens;            // Tens digit of centiseconds
+    wire [3:0] ms_tens;            // Tens digit of milliseconds
+    wire [3:0] ms_hundreds;        // Hundreds digit of milliseconds
     wire [3:0] sec_ones;           // Ones digit of seconds
     wire [3:0] sec_tens;           // Tens digit of seconds
     
@@ -33,7 +33,7 @@ module stopwatch_top (
     clock_divider u_clock_divider (
         .clk_50MHz(CLOCK_50),
         .rst_n(KEY[1]),            // Use KEY[1] (reset button) as active-low reset
-        .clk_100Hz(clk_100Hz),
+        .clk_1000Hz(clk_1000Hz),
         .clk_display(clk_display)
     );
     
@@ -65,20 +65,20 @@ module stopwatch_top (
     
     // Instantiate time counter
     time_counter u_time_counter (
-        .clk(clk_100Hz),
+        .clk(clk_1000Hz),
         .rst_n(KEY[1]),
         .enable(counting),
         .reset_counter(reset_timer),
-        .cs_ones(cs_ones),
-        .cs_tens(cs_tens),
+        .ms_tens(ms_tens),
+        .ms_hundreds(ms_hundreds),
         .sec_ones(sec_ones),
         .sec_tens(sec_tens)
     );
     
     // Instantiate 7-segment driver (static displays, no multiplexing)
     seg7_driver u_seg7_driver (
-        .digit0(cs_ones),          // HEX0: Centiseconds ones
-        .digit1(cs_tens),          // HEX1: Centiseconds tens
+        .digit0(ms_tens),          // HEX0: Milliseconds tens
+        .digit1(ms_hundreds),      // HEX1: Milliseconds hundreds
         .digit2(sec_ones),         // HEX2: Seconds ones
         .digit3(sec_tens),         // HEX3: Seconds tens
         .seg0(HEX0),

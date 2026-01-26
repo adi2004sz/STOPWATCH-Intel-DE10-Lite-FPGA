@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270" viewBox="0 0 480 270">
+  <rect width="100%" height="100%" fill="#000"/>
+  <polygon points="190,135 190,95 270,135 190,175" fill="#fff"/>
+  <text x="50%" y="90%" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#ccc" text-anchor="middle">Video thumbnail placeholder</text>
+</svg>
