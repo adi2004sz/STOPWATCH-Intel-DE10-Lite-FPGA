@@ -15,20 +15,20 @@ module time_counter (
     output reg [3:0] min_tens      // Tens digit of minutes (0-9)
 );
 
-    reg [7:0] total_seconds;
-    wire [7:0] total_minutes;
+    reg [15:0] total_seconds;
+    wire [15:0] total_minutes;
     
     assign total_minutes = total_seconds / 60;
     
     // Counter logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            total_seconds <= 8'd0;
+            total_seconds <= 16'd0;
         end else if (reset_counter) begin
-            total_seconds <= 8'd0;
+            total_seconds <= 16'd0;
         end else if (enable) begin
             // Increment seconds, max at 59:59 (3599 seconds)
-            if (total_seconds < 8'd239) begin  // 239 = 3 minutes 59 seconds, prevents overflow
+            if (total_seconds < 16'd3599) begin
                 total_seconds <= total_seconds + 1;
             end
         end

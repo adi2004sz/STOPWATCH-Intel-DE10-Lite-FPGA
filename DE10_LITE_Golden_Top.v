@@ -134,6 +134,24 @@ module DE10_LITE_Golden_Top(
 //  Structural coding
 //=======================================================
 
-
+	wire [6:0] hex0_seg, hex1_seg, hex2_seg, hex3_seg;
+	
+	// Instantiate stopwatch module
+	stopwatch_top u_stopwatch (
+		.CLOCK_50(MAX10_CLK1_50),
+		.KEY(KEY[1:0]),
+		.HEX0(hex0_seg),
+		.HEX1(hex1_seg),
+		.HEX2(hex2_seg),
+		.HEX3(hex3_seg)
+	);
+	
+	// Connect 7-bit segment output to 8-bit HEX outputs (add decimal point)
+	assign HEX0 = {1'b1, hex0_seg};  // Active-low, so 1 = off
+	assign HEX1 = {1'b1, hex1_seg};
+	assign HEX2 = {1'b1, hex2_seg};
+	assign HEX3 = {1'b1, hex3_seg};
+	assign HEX4 = 8'b11111111;       // Turn off HEX4
+	assign HEX5 = 8'b11111111;       // Turn off HEX5
 
 endmodule

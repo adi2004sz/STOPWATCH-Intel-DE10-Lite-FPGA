@@ -57,7 +57,7 @@ module stopwatch_top (
     
     // Instantiate stopwatch FSM
     stopwatch_fsm u_fsm (
-        .clk(clk_1Hz),
+        .clk(clk_display),
         .rst_n(KEY[1]),
         .start_pause_btn(key0_debounced),
         .reset_btn(key1_debounced),
