@@ -3,7 +3,7 @@
 // Top-level module
 // =============================================================================
 
-module top (
+module stopwatch_top (
     // Clock input
     input wire CLOCK_50,           // 50 MHz clock
     
