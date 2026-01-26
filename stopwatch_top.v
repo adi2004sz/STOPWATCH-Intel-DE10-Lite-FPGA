@@ -20,6 +20,8 @@ module stopwatch_top (
     // Internal signals
     wire clk_1Hz;                  // 1 Hz timebase clock
     wire clk_display;              // Display refresh clock (~1 kHz)
+    wire key0_debounced;           // Debounced start/pause button
+    wire key1_debounced;           // Debounced reset button
     
     // Instantiate clock divider
     clock_divider u_clock_divider (
@@ -27,6 +29,22 @@ module stopwatch_top (
         .rst_n(KEY[1]),            // Use KEY[1] (reset button) as active-low reset
         .clk_1Hz(clk_1Hz),
         .clk_display(clk_display)
+    );
+    
+    // Debounce start/pause button
+    button_debounce u_debounce_key0 (
+        .clk(clk_display),
+        .rst_n(KEY[1]),
+        .button_in(KEY[0]),
+        .button_out(key0_debounced)
+    );
+    
+    // Debounce reset button
+    button_debounce u_debounce_key1 (
+        .clk(clk_display),
+        .rst_n(KEY[1]),
+        .button_in(KEY[1]),
+        .button_out(key1_debounced)
     );
     
     // For now, turn off all 7-segment displays (active-low, so set to 1)
