@@ -24,6 +24,10 @@ module stopwatch_top (
     wire key1_debounced;           // Debounced reset button
     wire counting;                 // FSM output: counting active
     wire reset_timer;              // FSM output: reset timer
+    wire [3:0] sec_ones;           // Ones digit of seconds
+    wire [3:0] sec_tens;           // Tens digit of seconds
+    wire [3:0] min_ones;           // Ones digit of minutes
+    wire [3:0] min_tens;           // Tens digit of minutes
     
     // Instantiate clock divider
     clock_divider u_clock_divider (
@@ -57,6 +61,18 @@ module stopwatch_top (
         .reset_btn(key1_debounced),
         .counting(counting),
         .reset_timer(reset_timer)
+    );
+    
+    // Instantiate time counter
+    time_counter u_time_counter (
+        .clk(clk_1Hz),
+        .rst_n(KEY[1]),
+        .enable(counting),
+        .reset_counter(reset_timer),
+        .sec_ones(sec_ones),
+        .sec_tens(sec_tens),
+        .min_ones(min_ones),
+        .min_tens(min_tens)
     );
     
     // For now, turn off all 7-segment displays (active-low, so set to 1)
