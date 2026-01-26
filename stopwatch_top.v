@@ -22,6 +22,8 @@ module stopwatch_top (
     wire clk_display;              // Display refresh clock (~1 kHz)
     wire key0_debounced;           // Debounced start/pause button
     wire key1_debounced;           // Debounced reset button
+    wire counting;                 // FSM output: counting active
+    wire reset_timer;              // FSM output: reset timer
     
     // Instantiate clock divider
     clock_divider u_clock_divider (
@@ -45,6 +47,16 @@ module stopwatch_top (
         .rst_n(KEY[1]),
         .button_in(KEY[1]),
         .button_out(key1_debounced)
+    );
+    
+    // Instantiate stopwatch FSM
+    stopwatch_fsm u_fsm (
+        .clk(clk_1Hz),
+        .rst_n(KEY[1]),
+        .start_pause_btn(key0_debounced),
+        .reset_btn(key1_debounced),
+        .counting(counting),
+        .reset_timer(reset_timer)
     );
     
     // For now, turn off all 7-segment displays (active-low, so set to 1)
