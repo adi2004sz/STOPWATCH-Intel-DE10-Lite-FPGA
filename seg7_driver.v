@@ -1,32 +1,21 @@
 // =============================================================================
 // 7-Segment Driver Module
-// Multiplexes 4 7-segment displays and converts BCD to segment patterns
+// Converts BCD digits to 7-segment patterns for static displays
 // =============================================================================
 
 module seg7_driver (
-    input wire clk,                // ~1 kHz display refresh clock
-    input wire rst_n,              // Active-low reset
     input wire [3:0] digit0,       // HEX0 digit (ones of seconds)
     input wire [3:0] digit1,       // HEX1 digit (tens of seconds)
     input wire [3:0] digit2,       // HEX2 digit (ones of minutes)
     input wire [3:0] digit3,       // HEX3 digit (tens of minutes)
     
-    output reg [6:0] seg7_out,     // 7-segment display output (active-low)
-    output reg [3:0] digit_select  // Digit select (active-low)
+    output wire [6:0] seg0,        // HEX0 segment output (active-low)
+    output wire [6:0] seg1,        // HEX1 segment output (active-low)
+    output wire [6:0] seg2,        // HEX2 segment output (active-low)
+    output wire [6:0] seg3         // HEX3 segment output (active-low)
 );
 
-    reg [1:0] mux_counter;
-    
-    // Multiplexer counter for digit selection
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mux_counter <= 2'b00;
-        end else begin
-            mux_counter <= mux_counter + 1;
-        end
-    end
-    
-    // BCD to 7-segment decoder
+    // BCD to 7-segment decoder function
     function [6:0] bcd_to_seg7;
         input [3:0] bcd;
         begin
@@ -46,28 +35,10 @@ module seg7_driver (
         end
     endfunction
     
-    // Multiplexer logic
-    always @(*) begin
-        digit_select = 4'b1111;  // All off by default
-        
-        case (mux_counter)
-            2'b00: begin
-                digit_select = 4'b1110;  // HEX0 selected
-                seg7_out = bcd_to_seg7(digit0);
-            end
-            2'b01: begin
-                digit_select = 4'b1101;  // HEX1 selected
-                seg7_out = bcd_to_seg7(digit1);
-            end
-            2'b10: begin
-                digit_select = 4'b1011;  // HEX2 selected
-                seg7_out = bcd_to_seg7(digit2);
-            end
-            2'b11: begin
-                digit_select = 4'b0111;  // HEX3 selected
-                seg7_out = bcd_to_seg7(digit3);
-            end
-        endcase
-    end
+    // Direct output for each display
+    assign seg0 = bcd_to_seg7(digit0);
+    assign seg1 = bcd_to_seg7(digit1);
+    assign seg2 = bcd_to_seg7(digit2);
+    assign seg3 = bcd_to_seg7(digit3);
 
 endmodule

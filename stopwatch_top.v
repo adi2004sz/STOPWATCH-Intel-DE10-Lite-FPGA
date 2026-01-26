@@ -18,24 +18,22 @@ module stopwatch_top (
 );
 
     // Internal signals
-    wire clk_1Hz;                  // 1 Hz timebase clock
+    wire clk_100Hz;                // 100 Hz timebase clock
     wire clk_display;              // Display refresh clock (~1 kHz)
     wire key0_debounced;           // Debounced start/pause button
     wire key1_debounced;           // Debounced reset button
     wire counting;                 // FSM output: counting active
     wire reset_timer;              // FSM output: reset timer
+    wire [3:0] cs_ones;            // Ones digit of centiseconds
+    wire [3:0] cs_tens;            // Tens digit of centiseconds
     wire [3:0] sec_ones;           // Ones digit of seconds
     wire [3:0] sec_tens;           // Tens digit of seconds
-    wire [3:0] min_ones;           // Ones digit of minutes
-    wire [3:0] min_tens;           // Tens digit of minutes
-    wire [6:0] seg7_data;          // 7-segment output from driver
-    wire [3:0] seg7_select;        // Segment select signals
     
     // Instantiate clock divider
     clock_divider u_clock_divider (
         .clk_50MHz(CLOCK_50),
         .rst_n(KEY[1]),            // Use KEY[1] (reset button) as active-low reset
-        .clk_1Hz(clk_1Hz),
+        .clk_100Hz(clk_100Hz),
         .clk_display(clk_display)
     );
     
@@ -67,32 +65,26 @@ module stopwatch_top (
     
     // Instantiate time counter
     time_counter u_time_counter (
-        .clk(clk_1Hz),
+        .clk(clk_100Hz),
         .rst_n(KEY[1]),
         .enable(counting),
         .reset_counter(reset_timer),
+        .cs_ones(cs_ones),
+        .cs_tens(cs_tens),
         .sec_ones(sec_ones),
-        .sec_tens(sec_tens),
-        .min_ones(min_ones),
-        .min_tens(min_tens)
+        .sec_tens(sec_tens)
     );
     
-    // Instantiate 7-segment driver
+    // Instantiate 7-segment driver (static displays, no multiplexing)
     seg7_driver u_seg7_driver (
-        .clk(clk_display),
-        .rst_n(KEY[1]),
-        .digit0(sec_ones),
-        .digit1(sec_tens),
-        .digit2(min_ones),
-        .digit3(min_tens),
-        .seg7_out(seg7_data),
-        .digit_select(seg7_select)
+        .digit0(cs_ones),          // HEX0: Centiseconds ones
+        .digit1(cs_tens),          // HEX1: Centiseconds tens
+        .digit2(sec_ones),         // HEX2: Seconds ones
+        .digit3(sec_tens),         // HEX3: Seconds tens
+        .seg0(HEX0),
+        .seg1(HEX1),
+        .seg2(HEX2),
+        .seg3(HEX3)
     );
-    
-    // Assign outputs - all displays show same data but selected by digit_select
-    assign HEX0 = seg7_select[0] ? seg7_data : 7'b1111111;
-    assign HEX1 = seg7_select[1] ? seg7_data : 7'b1111111;
-    assign HEX2 = seg7_select[2] ? seg7_data : 7'b1111111;
-    assign HEX3 = seg7_select[3] ? seg7_data : 7'b1111111;
 
 endmodule
