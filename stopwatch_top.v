@@ -17,7 +17,17 @@ module stopwatch_top (
     output wire [6:0] HEX3         // Tens of minutes
 );
 
-    // Internal signals - to be implemented in future commits
+    // Internal signals
+    wire clk_1Hz;                  // 1 Hz timebase clock
+    wire clk_display;              // Display refresh clock (~1 kHz)
+    
+    // Instantiate clock divider
+    clock_divider u_clock_divider (
+        .clk_50MHz(CLOCK_50),
+        .rst_n(KEY[1]),            // Use KEY[1] (reset button) as active-low reset
+        .clk_1Hz(clk_1Hz),
+        .clk_display(clk_display)
+    );
     
     // For now, turn off all 7-segment displays (active-low, so set to 1)
     assign HEX0 = 7'b1111111;
