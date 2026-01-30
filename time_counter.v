@@ -1,6 +1,7 @@
 // =============================================================================
 // Time Counter Module
-// Counts seconds and milliseconds, stores individual digits for display
+// Counts seconds and milliseconds using cascaded BCD counters
+// Avoids division/modulo operations for efficient synthesis
 // =============================================================================
 
 module time_counter (
@@ -15,35 +16,65 @@ module time_counter (
     output reg [3:0] sec_tens      // Tens digit of seconds (0-5)
 );
 
-    reg [15:0] total_milliseconds;
-    wire [15:0] total_seconds;
+    // Internal counter for millisecond units (0-9)
+    reg [3:0] ms_units;
     
-    assign total_seconds = total_milliseconds / 1000;
-    
-    // Counter logic
+    // Cascaded BCD counter logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            total_milliseconds <= 16'd0;
+            ms_units    <= 4'd0;
+            ms_tens     <= 4'd0;
+            ms_hundreds <= 4'd0;
+            sec_ones    <= 4'd0;
+            sec_tens    <= 4'd0;
         end else if (reset_counter) begin
-            total_milliseconds <= 16'd0;
+            ms_units    <= 4'd0;
+            ms_tens     <= 4'd0;
+            ms_hundreds <= 4'd0;
+            sec_ones    <= 4'd0;
+            sec_tens    <= 4'd0;
         end else if (enable) begin
-            // Increment milliseconds, max at 59:999 (59999 milliseconds)
-            if (total_milliseconds < 16'd59999) begin
-                total_milliseconds <= total_milliseconds + 1;
+            // Cascaded BCD counting: ms_units -> ms_tens -> ms_hundreds -> sec_ones -> sec_tens
+            
+            if (ms_units == 4'd9) begin
+                ms_units <= 4'd0;
+                
+                if (ms_tens == 4'd9) begin
+                    ms_tens <= 4'd0;
+                    
+                    if (ms_hundreds == 4'd9) begin
+                        ms_hundreds <= 4'd0;
+                        
+                        if (sec_ones == 4'd9) begin
+                            sec_ones <= 4'd0;
+                            
+                            if (sec_tens == 4'd5) begin
+                                // Max reached (59.999), stop counting
+                                sec_tens <= 4'd5;
+                                sec_ones <= 4'd9;
+                                ms_hundreds <= 4'd9;
+                                ms_tens <= 4'd9;
+                                ms_units <= 4'd9;
+                            end else begin
+                                sec_tens <= sec_tens + 4'd1;
+                            end
+                            
+                        end else begin
+                            sec_ones <= sec_ones + 4'd1;
+                        end
+                        
+                    end else begin
+                        ms_hundreds <= ms_hundreds + 4'd1;
+                    end
+                    
+                end else begin
+                    ms_tens <= ms_tens + 4'd1;
+                end
+                
+            end else begin
+                ms_units <= ms_units + 4'd1;
             end
         end
-    end
-    
-    // Decode milliseconds into tens and hundreds
-    always @(*) begin
-        ms_tens = ((total_milliseconds % 1000) % 100) / 10;
-        ms_hundreds = (total_milliseconds % 1000) / 100;
-    end
-    
-    // Decode seconds into ones and tens
-    always @(*) begin
-        sec_ones = total_seconds % 10;
-        sec_tens = total_seconds / 10;
     end
 
 endmodule
