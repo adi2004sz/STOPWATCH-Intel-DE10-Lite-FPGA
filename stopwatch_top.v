@@ -21,7 +21,7 @@ module stopwatch_top (
     wire clk_1000Hz;               // 1000 Hz timebase clock
     wire clk_display;              // Display refresh clock (~1 kHz)
     wire key0_debounced;           // Debounced start/pause button
-    wire key1_debounced;           // Debounced reset button
+    wire reset_sync;               // Synchronized reset signal
     wire counting;                 // FSM output: counting active
     wire reset_timer;              // FSM output: reset timer
     wire [3:0] ms_tens;            // Tens digit of milliseconds
@@ -29,10 +29,19 @@ module stopwatch_top (
     wire [3:0] sec_ones;           // Ones digit of seconds
     wire [3:0] sec_tens;           // Tens digit of seconds
     
+    // Reset synchronizer - synchronize KEY[1] to avoid metastability
+    // No debouncing needed for reset - it's acceptable for reset to be immediate
+    reg reset_sync1, reset_sync2;
+    always @(posedge CLOCK_50) begin
+        reset_sync1 <= KEY[1];
+        reset_sync2 <= reset_sync1;
+    end
+    assign reset_sync = reset_sync2;
+    
     // Instantiate clock divider
     clock_divider u_clock_divider (
         .clk_50MHz(CLOCK_50),
-        .rst_n(KEY[1]),            // Use KEY[1] (reset button) as active-low reset
+        .rst_n(reset_sync),
         .clk_1000Hz(clk_1000Hz),
         .clk_display(clk_display)
     );
@@ -40,25 +49,20 @@ module stopwatch_top (
     // Debounce start/pause button
     button_debounce u_debounce_key0 (
         .clk(clk_display),
-        .rst_n(KEY[1]),
+        .rst_n(reset_sync),
         .button_in(KEY[0]),
         .button_out(key0_debounced)
     );
     
-    // Debounce reset button
-    button_debounce u_debounce_key1 (
-        .clk(clk_display),
-        .rst_n(KEY[1]),
-        .button_in(KEY[1]),
-        .button_out(key1_debounced)
-    );
+    // Note: Reset button (KEY[1]) is now synchronized but not debounced
+    // This is intentional - reset should be immediate and doesn't need debouncing
     
     // Instantiate stopwatch FSM
     stopwatch_fsm u_fsm (
         .clk(clk_display),
-        .rst_n(KEY[1]),
+        .rst_n(reset_sync),
         .start_pause_btn(key0_debounced),
-        .reset_btn(key1_debounced),
+        .reset_btn(reset_sync),        // Use synchronized reset directly
         .counting(counting),
         .reset_timer(reset_timer)
     );
@@ -66,7 +70,7 @@ module stopwatch_top (
     // Instantiate time counter
     time_counter u_time_counter (
         .clk(clk_1000Hz),
-        .rst_n(KEY[1]),
+        .rst_n(reset_sync),
         .enable(counting),
         .reset_counter(reset_timer),
         .ms_tens(ms_tens),
