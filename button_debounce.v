@@ -1,7 +1,5 @@
 // =============================================================================
 // Button Debounce Module
-// Debounces active-low push buttons with configurable debounce time
-// Single clock domain design using clock enable
 // =============================================================================
 
 module button_debounce (

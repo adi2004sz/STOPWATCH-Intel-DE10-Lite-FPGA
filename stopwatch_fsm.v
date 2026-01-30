@@ -1,7 +1,5 @@
 // =============================================================================
-// Stopwatch FSM
-// Finite State Machine for stopwatch control: IDLE, RUN, PAUSE
-// Single clock domain design using clock enable
+// Stopwatch FSM Module
 // =============================================================================
 
 module stopwatch_fsm (
@@ -12,7 +10,8 @@ module stopwatch_fsm (
     input wire reset_btn,          // Reset button (active-low)
     
     output reg counting,           // High when stopwatch is counting
-    output reg reset_timer         // High to reset timer
+    output reg reset_timer,        // High to reset timer
+    output reg paused              // High when stopwatch is paused
 );
 
     // State machine states
@@ -67,6 +66,7 @@ module stopwatch_fsm (
     // Output logic
     always @(*) begin
         counting = (current_state == RUN);
+        paused = (current_state == PAUSE);
         reset_timer = !reset_btn;
     end
 

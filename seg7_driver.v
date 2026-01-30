@@ -1,6 +1,5 @@
 // =============================================================================
 // 7-Segment Driver Module
-// Converts BCD digits to 7-segment patterns for static displays
 // =============================================================================
 
 module seg7_driver (

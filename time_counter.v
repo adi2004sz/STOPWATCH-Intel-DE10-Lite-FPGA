@@ -1,7 +1,5 @@
 // =============================================================================
 // Time Counter Module
-// Counts seconds and milliseconds using cascaded BCD counters
-// Single clock domain design using clock enable
 // =============================================================================
 
 module time_counter (

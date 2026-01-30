@@ -1,6 +1,5 @@
 // =============================================================================
-// Clock Divider for Stopwatch
-// Generates clock enable pulses from 50 MHz input (single clock domain design)
+// Clock Divider Module
 // =============================================================================
 
 module clock_divider (
