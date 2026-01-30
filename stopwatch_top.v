@@ -27,10 +27,10 @@ module stopwatch_top (
     wire counting;                 // FSM output: counting active
     wire paused;                   // FSM output: paused state
     wire reset_timer;              // FSM output: reset timer
-    wire [3:0] ms_tens;            // Tens digit of milliseconds
-    wire [3:0] ms_hundreds;        // Hundreds digit of milliseconds
-    wire [3:0] sec_ones;           // Ones digit of seconds
-    wire [3:0] sec_tens;           // Tens digit of seconds
+    wire [3:0] ms_tens;            // 10ms digit (0-9)
+    wire [3:0] ms_hundreds;        // 100ms digit (0-9)
+    wire [3:0] sec_ones;           // Seconds ones digit (0-9)
+    wire [3:0] sec_tens;           // Seconds tens digit (0-5)
     
     // LED blink generator (2 Hz blink rate)
     reg [24:0] blink_counter;
@@ -93,8 +93,8 @@ module stopwatch_top (
     
     // Instantiate 7-segment driver (static displays, no multiplexing)
     seg7_driver u_seg7_driver (
-        .digit0(ms_tens),          // HEX0: Milliseconds tens
-        .digit1(ms_hundreds),      // HEX1: Milliseconds hundreds
+        .digit0(ms_tens),          // HEX0: 10ms digit
+        .digit1(ms_hundreds),      // HEX1: 100ms digit
         .digit2(sec_ones),         // HEX2: Seconds ones
         .digit3(sec_tens),         // HEX3: Seconds tens
         .seg0(HEX0),

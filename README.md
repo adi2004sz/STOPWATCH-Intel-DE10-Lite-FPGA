@@ -12,19 +12,28 @@ A fully functional digital stopwatch implementation in Verilog HDL for the Intel
 ![DE10-Lite Board Setup](images/board-setup.jpeg)
 
 ### Stopwatch in Action
-<video src="videos/stopwatch-display.mp4" controls width="640">Your browser doesn't support video.</video>
-*Video showing 7-segment displays in SS.MM format*
+
+[![Stopwatch Display Video](images/video-thumbnail.svg)](videos/stopwatch-display.mp4)
+
+*Click the image above to view the video showing 7-segment displays in SS.ms format*
 
 ### Video Demonstration
-<video src="videos/stopwatch-demo.mp4" controls width="640">Your browser doesn't support video.</video>
+
+[![Stopwatch Demo Video](images/video-thumbnail.svg)](videos/stopwatch-demo.mp4)
+
+*Click the image above to view the full demonstration video*
+
+> **Tip:** To watch the videos, clone the repository and open the files in the `videos/` folder, or click the links above to download them.
 
 ## Features
 
 - **High Precision Timing**: 1000Hz (millisecond) accurate timebase derived from 50MHz clock
-- **SS.MM Display**: Time format from 00.00 to 59.99 (seconds.milliseconds)
+- **SS.ms Display**: Time format from 00.00 to 59.99 (seconds.hundredths) with decimal point
 - **Start/Pause/Resume**: Full stopwatch functionality with precision timing
 - **Instant Reset**: Reset to 00.00 from any state
+- **LED Status Indicators**: Visual feedback for running, paused, and max time states
 - **Debounced Inputs**: 20ms debounce with metastability protection
+- **Single Clock Domain Design**: Proper FPGA design using clock enables
 - **Hardware Tested**: Verified on Intel DE10-Lite board
 
 ## Table of Contents
@@ -49,6 +58,7 @@ A fully functional digital stopwatch implementation in Verilog HDL for the Intel
 | **Device** | 10M50DAF484C6GES |
 | **Clock** | 50 MHz oscillator |
 | **Displays** | 4× 7-segment displays (on-board) |
+| **LEDs** | 10× Red LEDs (LEDR0-LEDR9) |
 | **Inputs** | 2× Push buttons (KEY0, KEY1) |
 | **Programmer** | USB-Blaster compatible |
 
@@ -92,10 +102,30 @@ A fully functional digital stopwatch implementation in Verilog HDL for the Intel
 | **KEY0** | Lower | Start/Pause toggle |
 | **KEY1** | Upper | Reset to 00.00 |
 
+### LED Status Indicators
+
+| LED | Function |
+|-----|----------|
+| **LEDR[0]** | Blinks (2 Hz) when stopwatch is running |
+| **LEDR[1]** | Solid ON when stopwatch is paused |
+| **LEDR[9]** | ON when max time reached (59.99) |
+
+### Display Format
+
+```
+  HEX3   HEX2   HEX1   HEX0
+ ┌─────┐┌─────┐┌─────┐┌─────┐
+ │  5  ││  9. ││  9  ││  9  │
+ └─────┘└─────┘└─────┘└─────┘
+    └─seconds─┘└──10ms units──┘
+```
+
+The decimal point on HEX2 separates seconds from the fractional part (displayed in 10ms increments).
+
 ### Operation Flow
 
 1. **Power On**: Display shows `00.00`
-2. **Start**: Press `KEY0` (lower button) → Counter begins (increments by 0.001s)
+2. **Start**: Press `KEY0` (lower button) → Counter begins (increments every 10ms)
 3. **Pause**: Press `KEY0` again → Counter freezes
 4. **Resume**: Press `KEY0` again → Counter continues
 5. **Reset**: Press `KEY1` (upper) → Returns to `00.00`
@@ -104,8 +134,8 @@ A fully functional digital stopwatch implementation in Verilog HDL for the Intel
 
 ```
 Initial State:    00.00
-Press KEY0:       00.01 → 00.02 → 00.03 ... (counting in milliseconds)
-Press KEY0:       15.47 (paused)
+Press KEY0:       00.01 → 00.02 → 00.03 ... (each step = 10ms)
+Press KEY0:       15.47 (paused at 15.47 seconds)
 Press KEY0:       15.48 → 15.49 ... (resumed)
 Press KEY1:       00.00 (reset)
 ```
@@ -119,8 +149,8 @@ The stopwatch is implemented using a modular architecture with clear separation 
 ```mermaid
 graph TD
     A[50MHz Clock] --> B[Clock Divider]
-    B --> C[1Hz Timebase]
-    B --> D[~1kHz Debounce Clock]
+    B --> C[1000Hz Enable]
+    B --> D[1kHz Display Enable]
     
     E[KEY Inputs] --> F[Button Debounce]
     F --> G[Stopwatch FSM]
@@ -128,22 +158,25 @@ graph TD
     
     C --> H[Time Counter]
     G --> H
+    G --> L[LED Status]
     
     H --> I[BCD Digits]
     I --> J[7-Segment Driver]
     J --> K[HEX Displays]
+    H --> L
 ```
 
 ### Module Descriptions
 
 | Module | Purpose | Key Features |
 |--------|---------|--------------|
-| `clock_divider.v` | Clock generation | 50MHz → 1000Hz + debounce clock |
+| `clock_divider.v` | Clock enable generation | 50MHz → 1000Hz enable pulses |
 | `button_debounce.v` | Input conditioning | Metastability protection, 20ms debounce |
 | `stopwatch_fsm.v` | State machine | IDLE/RUN/PAUSE states with edge detection |
-| `time_counter.v` | Time tracking | Millisecond counter with digit decomposition |
+| `time_counter.v` | Time tracking | Cascaded BCD counters (no division) |
 | `seg7_driver.v` | Display interface | BCD to 7-segment decoder |
-| `stopwatch_top.v` | System integration | Top-level module connections |
+| `stopwatch_top.v` | System integration | Top-level connections + LED status |
+| `DE10_LITE_Golden_Top.v` | Board wrapper | Pin assignments and I/O mapping |
 
 ## Pin Configuration
 
@@ -157,27 +190,41 @@ graph TD
 ### 7-Segment Displays
 | Display | Segments | Pins | Function |
 |---------|----------|------|----------|
-| `HEX0` | [7:0] | C14,E15,C15,C16,E16,D17,C17,D15 | Milliseconds tens |
-| `HEX1` | [7:0] | C18,D18,E18,B16,A17,A18,B17,A16 | Milliseconds hundreds |
-| `HEX2` | [7:0] | B20,A20,B19,A21,B21,C22,B22,F21 | Seconds ones |
+| `HEX0` | [7:0] | C14,E15,C15,C16,E16,D17,C17,D15 | 10ms digit (0-9) |
+| `HEX1` | [7:0] | C18,D18,E18,B16,A17,A18,B17,A16 | 100ms digit (0-9) |
+| `HEX2` | [7:0] | B20,A20,B19,A21,B21,C22,B22,F21 | Seconds ones (with decimal point) |
 | `HEX3` | [7:0] | F21,E22,E21,C19,C20,D19,E17,F18 | Seconds tens |
+
+### LED Indicators
+| LED | Pin | Function |
+|-----|-----|----------|
+| `LEDR[0]` | A8 | Running indicator (blinks at 2 Hz) |
+| `LEDR[1]` | A9 | Paused indicator (solid) |
+| `LEDR[9]` | B11 | Max time reached (59.99) |
 
 ## Performance
 
 ### Timing Specifications
 - **Clock Accuracy**: ±0.002% (derived from 50MHz crystal)
-- **Time Resolution**: 0.001 seconds (milliseconds)
-- **Maximum Count**: 59.99 (59 seconds, 990 milliseconds)
+- **Time Resolution**: 10 milliseconds (0.01 seconds)
+- **Display Range**: 00.00 to 59.99 seconds
 - **Button Response**: <20ms debounce delay
 - **Display Update**: Static (no refresh needed)
+- **LED Blink Rate**: 2 Hz when running
+
+### Design Features
+- **Single Clock Domain**: All logic uses 50 MHz with clock enables
+- **No Generated Clocks**: Uses enable pulses for timing
+- **Cascaded BCD Counters**: Efficient digit counting without division
+- **Metastability Protection**: 2-stage synchronizers on async inputs
 
 ### Resource Utilization
 | Resource | Used | Available | Utilization |
 |----------|------|-----------|-------------|
-| Logic Elements | ~150 | 49,760 | <1% |
-| Registers | ~80 | 49,760 | <1% |
+| Logic Elements | ~200 | 49,760 | <1% |
+| Registers | ~100 | 49,760 | <1% |
 | Memory Bits | 0 | 1,677,312 | 0% |
-| Pins | 42 | 360 | 12% |
+| Pins | 52 | 360 | 14% |
 
 ## Project Structure
 

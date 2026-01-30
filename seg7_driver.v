@@ -3,10 +3,10 @@
 // =============================================================================
 
 module seg7_driver (
-    input wire [3:0] digit0,       // HEX0 digit (tens of milliseconds)
-    input wire [3:0] digit1,       // HEX1 digit (hundreds of milliseconds)
-    input wire [3:0] digit2,       // HEX2 digit (ones of seconds)
-    input wire [3:0] digit3,       // HEX3 digit (tens of seconds)
+    input wire [3:0] digit0,       // HEX0 digit (10ms units: 0-9)
+    input wire [3:0] digit1,       // HEX1 digit (100ms units: 0-9)
+    input wire [3:0] digit2,       // HEX2 digit (seconds ones: 0-9)
+    input wire [3:0] digit3,       // HEX3 digit (seconds tens: 0-5)
     
     output wire [6:0] seg0,        // HEX0 segment output (active-low)
     output wire [6:0] seg1,        // HEX1 segment output (active-low)

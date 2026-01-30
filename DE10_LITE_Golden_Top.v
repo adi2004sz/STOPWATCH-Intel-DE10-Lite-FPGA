@@ -142,11 +142,12 @@ module DE10_LITE_Golden_Top(
 		.LEDR(led_status)
 	);
 	
-	// Connect 7-bit segment output to 8-bit HEX outputs (add decimal point)
-	assign HEX0 = {1'b1, hex0_seg};  // Active-low, so 1 = off
-	assign HEX1 = {1'b1, hex1_seg};
-	assign HEX2 = {1'b1, hex2_seg};
-	assign HEX3 = {1'b1, hex3_seg};
+	// Connect 7-bit segment output to 8-bit HEX outputs
+	// Bit 7 (MSB) is decimal point, active-low: 0 = ON, 1 = OFF
+	assign HEX0 = {1'b1, hex0_seg};  // No decimal point
+	assign HEX1 = {1'b1, hex1_seg};  // No decimal point
+	assign HEX2 = {1'b0, hex2_seg};  // Decimal point ON (separates SS.MM)
+	assign HEX3 = {1'b1, hex3_seg};  // No decimal point
 	assign HEX4 = 8'b11111111;       // Turn off HEX4
 	assign HEX5 = 8'b11111111;       // Turn off HEX5
 

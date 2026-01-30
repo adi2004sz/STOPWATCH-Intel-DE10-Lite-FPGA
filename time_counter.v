@@ -9,16 +9,16 @@ module time_counter (
     input wire enable,             // Count enable (from FSM)
     input wire reset_counter,      // Synchronous reset
     
-    output reg [3:0] ms_tens,      // Tens digit of milliseconds (0-9)
-    output reg [3:0] ms_hundreds,  // Hundreds digit of milliseconds (0-9)
-    output reg [3:0] sec_ones,     // Ones digit of seconds (0-9)
-    output reg [3:0] sec_tens      // Tens digit of seconds (0-5)
+    output reg [3:0] ms_tens,      // 10ms digit (0-9), displayed on HEX0
+    output reg [3:0] ms_hundreds,  // 100ms digit (0-9), displayed on HEX1
+    output reg [3:0] sec_ones,     // Seconds ones (0-9), displayed on HEX2
+    output reg [3:0] sec_tens      // Seconds tens (0-5), displayed on HEX3
 );
 
-    // Internal counter for millisecond units (0-9)
+    // Internal counter for 1ms units (0-9, not displayed)
     reg [3:0] ms_units;
     
-    // Cascaded BCD counter logic - only advances on clock enable
+    // Cascaded BCD counter logic - only advances on clock enable (1ms tick)
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             ms_units    <= 4'd0;
@@ -33,7 +33,7 @@ module time_counter (
             sec_ones    <= 4'd0;
             sec_tens    <= 4'd0;
         end else if (clk_en && enable) begin
-            // Cascaded BCD counting: ms_units -> ms_tens -> ms_hundreds -> sec_ones -> sec_tens
+            // Cascaded BCD counting: 1ms -> 10ms -> 100ms -> 1s -> 10s
             
             if (ms_units == 4'd9) begin
                 ms_units <= 4'd0;
@@ -48,7 +48,7 @@ module time_counter (
                             sec_ones <= 4'd0;
                             
                             if (sec_tens == 4'd5) begin
-                                // Max reached (59.999), stop counting
+                                // Max reached (59.99 seconds), stop counting
                                 sec_tens <= 4'd5;
                                 sec_ones <= 4'd9;
                                 ms_hundreds <= 4'd9;
