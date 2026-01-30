@@ -154,4 +154,58 @@ module DE10_LITE_Golden_Top(
 	assign HEX4 = 8'b11111111;       // Turn off HEX4
 	assign HEX5 = 8'b11111111;       // Turn off HEX5
 
+//=======================================================
+//  Default assignments for unused outputs
+//=======================================================
+
+`ifdef ENABLE_LED
+	// Turn off all LEDs (directly active, so 0 = off)
+	assign LEDR = 10'b0;
+`endif
+
+`ifdef ENABLE_SDRAM
+	// SDRAM - set to safe inactive state
+	assign DRAM_ADDR  = 13'b0;
+	assign DRAM_BA    = 2'b0;
+	assign DRAM_CAS_N = 1'b1;       // Active-low, so 1 = inactive
+	assign DRAM_CKE   = 1'b0;       // Clock enable off
+	assign DRAM_CLK   = 1'b0;
+	assign DRAM_CS_N  = 1'b1;       // Active-low, so 1 = deselected
+	assign DRAM_LDQM  = 1'b1;       // Mask data
+	assign DRAM_RAS_N = 1'b1;       // Active-low, so 1 = inactive
+	assign DRAM_UDQM  = 1'b1;       // Mask data
+	assign DRAM_WE_N  = 1'b1;       // Active-low, so 1 = no write
+	// DRAM_DQ is inout - set to high-impedance
+	assign DRAM_DQ    = 16'bz;
+`endif
+
+`ifdef ENABLE_VGA
+	// VGA - blank screen (active video = 0)
+	assign VGA_R  = 4'b0;
+	assign VGA_G  = 4'b0;
+	assign VGA_B  = 4'b0;
+	assign VGA_HS = 1'b1;           // Sync signals idle high
+	assign VGA_VS = 1'b1;
+`endif
+
+`ifdef ENABLE_ACCELEROMETER
+	// Accelerometer - inactive state
+	assign GSENSOR_CS_N  = 1'b1;    // Active-low, so 1 = deselected
+	assign GSENSOR_SCLK  = 1'b0;    // Clock idle low
+	// Bidirectional pins set to high-impedance
+	assign GSENSOR_SDI   = 1'bz;
+	assign GSENSOR_SDO   = 1'bz;
+`endif
+
+`ifdef ENABLE_ARDUINO
+	// Arduino header - high-impedance (allow external use)
+	assign ARDUINO_IO      = 16'bz;
+	assign ARDUINO_RESET_N = 1'bz;
+`endif
+
+`ifdef ENABLE_GPIO
+	// GPIO - high-impedance (allow external use)
+	assign GPIO = 36'bz;
+`endif
+
 endmodule
