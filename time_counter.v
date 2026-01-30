@@ -1,12 +1,13 @@
 // =============================================================================
 // Time Counter Module
 // Counts seconds and milliseconds using cascaded BCD counters
-// Avoids division/modulo operations for efficient synthesis
+// Single clock domain design using clock enable
 // =============================================================================
 
 module time_counter (
-    input wire clk,                // 1000 Hz clock input
+    input wire clk,                // 50 MHz clock input
     input wire rst_n,              // Active-low reset
+    input wire clk_en,             // 1000 Hz clock enable
     input wire enable,             // Count enable (from FSM)
     input wire reset_counter,      // Synchronous reset
     
@@ -19,7 +20,7 @@ module time_counter (
     // Internal counter for millisecond units (0-9)
     reg [3:0] ms_units;
     
-    // Cascaded BCD counter logic
+    // Cascaded BCD counter logic - only advances on clock enable
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             ms_units    <= 4'd0;
@@ -33,7 +34,7 @@ module time_counter (
             ms_hundreds <= 4'd0;
             sec_ones    <= 4'd0;
             sec_tens    <= 4'd0;
-        end else if (enable) begin
+        end else if (clk_en && enable) begin
             // Cascaded BCD counting: ms_units -> ms_tens -> ms_hundreds -> sec_ones -> sec_tens
             
             if (ms_units == 4'd9) begin

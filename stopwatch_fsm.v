@@ -1,12 +1,14 @@
 // =============================================================================
 // Stopwatch FSM
 // Finite State Machine for stopwatch control: IDLE, RUN, PAUSE
+// Single clock domain design using clock enable
 // =============================================================================
 
 module stopwatch_fsm (
-    input wire clk,                // Clock input (1 Hz for state timing)
+    input wire clk,                // 50 MHz clock input
     input wire rst_n,              // Active-low reset
-    input wire start_pause_btn,    // Start/Pause button (active-low)
+    input wire clk_en,             // Clock enable (~1 kHz rate)
+    input wire start_pause_btn,    // Start/Pause button (active-low, debounced)
     input wire reset_btn,          // Reset button (active-low)
     
     output reg counting,           // High when stopwatch is counting
@@ -20,22 +22,20 @@ module stopwatch_fsm (
     
     reg [1:0] current_state, next_state;
     reg prev_start_pause;
-    reg start_pause_edge;
+    wire start_pause_edge;
     
-    // State register
+    // Edge detection for start/pause button (active-low, so detect falling edge)
+    assign start_pause_edge = prev_start_pause & ~start_pause_btn;
+    
+    // State register - only updates on clock enable
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             current_state <= IDLE;
             prev_start_pause <= 1'b1;
-        end else begin
+        end else if (clk_en) begin
             current_state <= next_state;
             prev_start_pause <= start_pause_btn;
         end
-    end
-    
-    // Edge detection for start/pause button
-    always @(*) begin
-        start_pause_edge = prev_start_pause & ~start_pause_btn;
     end
     
     // State transition logic

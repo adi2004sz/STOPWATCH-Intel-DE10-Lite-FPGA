@@ -18,8 +18,8 @@ module stopwatch_top (
 );
 
     // Internal signals
-    wire clk_1000Hz;               // 1000 Hz timebase clock
-    wire clk_display;              // Display refresh clock (~1 kHz)
+    wire en_1000Hz;                // 1000 Hz clock enable pulse
+    wire en_display;               // Display/debounce clock enable (~1 kHz)
     wire key0_debounced;           // Debounced start/pause button
     wire reset_sync;               // Synchronized reset signal
     wire counting;                 // FSM output: counting active
@@ -38,18 +38,19 @@ module stopwatch_top (
     end
     assign reset_sync = reset_sync2;
     
-    // Instantiate clock divider
+    // Instantiate clock divider - generates enable pulses, not clock signals
     clock_divider u_clock_divider (
         .clk_50MHz(CLOCK_50),
         .rst_n(reset_sync),
-        .clk_1000Hz(clk_1000Hz),
-        .clk_display(clk_display)
+        .en_1000Hz(en_1000Hz),
+        .en_display(en_display)
     );
     
-    // Debounce start/pause button
+    // Debounce start/pause button - uses 50 MHz clock with enable
     button_debounce u_debounce_key0 (
-        .clk(clk_display),
+        .clk(CLOCK_50),
         .rst_n(reset_sync),
+        .clk_en(en_display),
         .button_in(KEY[0]),
         .button_out(key0_debounced)
     );
@@ -57,20 +58,22 @@ module stopwatch_top (
     // Note: Reset button (KEY[1]) is now synchronized but not debounced
     // This is intentional - reset should be immediate and doesn't need debouncing
     
-    // Instantiate stopwatch FSM
+    // Instantiate stopwatch FSM - uses 50 MHz clock with enable
     stopwatch_fsm u_fsm (
-        .clk(clk_display),
+        .clk(CLOCK_50),
         .rst_n(reset_sync),
+        .clk_en(en_display),
         .start_pause_btn(key0_debounced),
         .reset_btn(reset_sync),        // Use synchronized reset directly
         .counting(counting),
         .reset_timer(reset_timer)
     );
     
-    // Instantiate time counter
+    // Instantiate time counter - uses 50 MHz clock with 1000 Hz enable
     time_counter u_time_counter (
-        .clk(clk_1000Hz),
+        .clk(CLOCK_50),
         .rst_n(reset_sync),
+        .clk_en(en_1000Hz),
         .enable(counting),
         .reset_counter(reset_timer),
         .ms_tens(ms_tens),
